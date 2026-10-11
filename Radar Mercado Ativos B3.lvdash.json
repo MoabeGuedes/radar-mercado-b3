@@ -1,0 +1,478 @@
+{
+  "datasets": [
+    {
+      "name": "6662ebcc",
+      "displayName": "radar_mercado",
+      "config": {
+        "version": "1.1",
+        "source": "workspace.default.radar_mercado",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    },
+    {
+      "name": "7cc50b46",
+      "displayName": "Filtered Signal Count Dataset",
+      "queryLines": [
+        "SELECT\r\n",
+        "    COUNT(*) AS registros_sinalizados\r\n",
+        "FROM workspace.default.radar_mercado\r\n",
+        "WHERE classificacao <> 'Sem sinalizacao';"
+      ]
+    },
+    {
+      "name": "e579c910",
+      "displayName": "Unique Ticker Count Analysis",
+      "queryLines": [
+        "SELECT\r\n",
+        "    COUNT(DISTINCT ticker) AS ativos_analisados\r\n",
+        "    FROM workspace.default.radar_mercado;"
+      ]
+    },
+    {
+      "name": "eb37afa8",
+      "displayName": "Market Signal Insights with Price and Volume Trends",
+      "queryLines": [
+        "SELECT\r\n",
+        "    ticker,\r\n",
+        "    data_pregao,\r\n",
+        "    preco_ultimo,\r\n",
+        "    retorno_diario_pct,\r\n",
+        "    volume_elevado,\r\n",
+        "    razao_volume_20,\r\n",
+        "    classificacao,\r\n",
+        "    CASE\r\n",
+        "        WHEN classificacao = 'Preco e volume expressivos' THEN 1\r\n",
+        "        WHEN classificacao = 'Variacao expressiva de preco' THEN 2\r\n",
+        "        WHEN classificacao = 'Volume elevado' THEN 3\r\n",
+        "        ELSE 4\r\n",
+        "    END AS prioridade\r\n",
+        "FROM workspace.default.radar_mercado\r\n",
+        "WHERE classificacao <> 'Sem sinalizacao'\r\n",
+        "ORDER BY\r\n",
+        "    prioridade ASC,\r\n",
+        "    ABS(retorno_diario_pct) DESC,\r\n",
+        "    razao_volume_20 DESC"
+      ]
+    },
+    {
+      "name": "ba0783ec",
+      "displayName": "Daily Market Returns by Ticker and Trading Date",
+      "queryLines": [
+        "SELECT\r\n",
+        "    data_pregao,\r\n",
+        "    ticker,\r\n",
+        "    retorno_diario_pct\r\n",
+        "FROM workspace.default.radar_mercado\r\n",
+        "WHERE retorno_diario_pct IS NOT NULL\r\n",
+        "ORDER BY data_pregao, ticker;"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "f16738c4",
+      "displayName": "Radar Mercado B3",
+      "layout": [
+        {
+          "widget": {
+            "name": "pregoes-por-classificacao",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6662ebcc",
+                  "fields": [
+                    {
+                      "name": "measure(count)",
+                      "expression": "MEASURE(`count`)"
+                    },
+                    {
+                      "name": "classificacao",
+                      "expression": "`classificacao`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"text-align:center;display:block;\"><span style=\"font-size: 24px;\">Pregões por classificação</span></span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "measure(count)",
+                  "displayName": "Total Registros",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "classificacao",
+                  "displayName": "Classificação Ativos",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 12,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "total-registros-analisados",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6662ebcc",
+                  "fields": [
+                    {
+                      "name": "measure(count)",
+                      "expression": "MEASURE(`count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"text-align:center;display:block\"><span style=\"font-size: 24px;\">Registros </span></span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(count)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 4,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "registros-sinalizados",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7cc50b46",
+                  "fields": [
+                    {
+                      "name": "sum(registros_sinalizados)",
+                      "expression": "SUM(`registros_sinalizados`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"text-align:center;display:block;\"><span style=\"font-size: 24px;\">Registros Sinalizados</span></span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(registros_sinalizados)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 4,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ativos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "e579c910",
+                  "fields": [
+                    {
+                      "name": "sum(ativos_analisados)",
+                      "expression": "SUM(`ativos_analisados`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"text-align:center;display:block;\"><span style=\"font-size: 24px;\">Ativos</span></span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(ativos_analisados)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "pregoeseinvestigacao",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "eb37afa8",
+                  "fields": [
+                    {
+                      "name": "ticker",
+                      "expression": "`ticker`"
+                    },
+                    {
+                      "name": "data_pregao",
+                      "expression": "`data_pregao`"
+                    },
+                    {
+                      "name": "retorno_diario_pct",
+                      "expression": "`retorno_diario_pct`"
+                    },
+                    {
+                      "name": "volume_elevado",
+                      "expression": "`volume_elevado`"
+                    },
+                    {
+                      "name": "razao_volume_20",
+                      "expression": "`razao_volume_20`"
+                    },
+                    {
+                      "name": "classificacao",
+                      "expression": "`classificacao`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"text-align:center;display:block;\"><span style=\"font-size:24px\">Pregões que merecem investigação</span></span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "ticker",
+                    "displayName": "Ativos"
+                  },
+                  {
+                    "fieldName": "data_pregao",
+                    "displayName": "Data"
+                  },
+                  {
+                    "fieldName": "retorno_diario_pct",
+                    "displayName": "Percentual Retorno Diário"
+                  },
+                  {
+                    "fieldName": "volume_elevado",
+                    "displayName": "Volume Elevado"
+                  },
+                  {
+                    "fieldName": "razao_volume_20",
+                    "displayName": "Razão últimos 20 volumes"
+                  },
+                  {
+                    "fieldName": "classificacao",
+                    "displayName": "Classificação"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 13,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "6ff8731b",
+            "multilineTextboxSpec": {
+              "lines": [
+                "<span style=\"text-align:center;display:block\"><span style=\"font-size:18px\">**Metodologia e Escopo da Análise**</span></span>\n",
+                "\n",
+                "<span style=\"font-size:14px\">Fonte: </span><span style=\"font-size:14px;font-weight:700\">COTAHIST da B3</span><span style=\"font-size:14px\">, mercado à vista. Período analisado: </span><span style=\"font-size:14px;font-weight:700\">09/04/2026</span><span style=\"font-size:14px\"> a </span><span style=\"font-size:14px;font-weight:700\">09/10/2026</span><span style=\"font-size:14px\">. Ativos: </span><span style=\"font-size:14px;font-weight:700\">ITUB4, PETR4 e VALE3.</span>\n",
+                "\n",
+                "<span style=\"font-size:14px\">Um pregão é sinalizado quando o </span><span style=\"font-size: 14px;\">**retorno diário absoluto é igual ou superior a 2%,**</span><span style=\"font-size:14px\"> ou quando o </span><span style=\"font-size: 14px;\">**volume financeiro alcança pelo menos 1,5 vez a média dos 20 pregões anteriores**</span><span style=\"font-size:14px\">. Os indicadores são exploratórios e não constituem recomendações de investimento.</span>\n",
+                "\n",
+                "<span style=\"font-size:14px\">O retorno foi calculado com base no preço do último negócio, sem ajuste por dividendos ou outros eventos corporativos.</span>"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "grafico-temporal-dos-retornos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ba0783ec",
+                  "fields": [
+                    {
+                      "name": "ticker",
+                      "expression": "`ticker`"
+                    },
+                    {
+                      "name": "data_pregao",
+                      "expression": "`data_pregao`"
+                    },
+                    {
+                      "name": "retorno_diario_pct",
+                      "expression": "`retorno_diario_pct`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "### <span style=\"text-align:center;display:block\"><span style=\"font-size: 24px;\">Gráfico temporal dos retornos</span></span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "data_pregao",
+                  "displayName": "Data Pregões",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "retorno_diario_pct",
+                  "displayName": "Percentual Retorno Diário",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "ticker",
+                  "displayName": "Ativos",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 19,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
